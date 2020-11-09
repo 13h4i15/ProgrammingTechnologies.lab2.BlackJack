@@ -3,7 +3,6 @@ package di.module
 import dagger.Module
 import dagger.Provides
 import di.scope.SessionScope
-import server.Session
 import java.io.*
 import java.net.Socket
 import javax.inject.Named

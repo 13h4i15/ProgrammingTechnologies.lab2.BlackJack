@@ -12,11 +12,4 @@ class MongoDbModule {
     fun mongoClient(): MongoClient {
         return MongoClient()
     }
-
-    /*@Provides
-    fun settings(): MongoClientSettings {
-        return MongoClientSettings.builder()
-            .codecRegistry(MongoClient.getDefaultCodecRegistry())
-            .build()
-    }*/
 }
