@@ -1,8 +1,10 @@
 package server
 
 import com.google.gson.Gson
+import db.PlayerEntity
 import di.module.IOModule
 import model.PointsPool
+import repository.SaveSessionResultRepository
 import servermodel.*
 import util.nextCard
 import java.io.*
@@ -12,6 +14,9 @@ import javax.inject.Named
 import kotlin.random.Random
 
 class Session(private val firstPlayer: Socket, private val secondPlayer: Socket) : Thread() {
+    @Inject
+    lateinit var saveRepository: SaveSessionResultRepository
+
     @Inject
     lateinit var gson: Gson
 
@@ -94,6 +99,9 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
                         || ((firstPlayerPool.points < 21 && secondPlayerPool.points < 21)
                         && (firstPlayerPool.points > secondPlayerPool.points))
 
+                val winner = if (isFirstPlayerWinner) firstPlayer else secondPlayer
+                val loser = if (isFirstPlayerWinner) secondPlayer else firstPlayer
+
                 val winnerWriter = if (isFirstPlayerWinner) firstPlayerWriter else secondPlayerWriter
                 val loserWriter = if (isFirstPlayerWinner) secondPlayerWriter else firstPlayerWriter
 
@@ -102,10 +110,20 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
 
                 winnerWriter.println(gson.toJson(Winner(winnerPointsPool.points, loserPointsPool.points)))
                 loserWriter.println(gson.toJson(Loser(loserPointsPool.points, winnerPointsPool.points)))
+
+                saveRepository.save(
+                    PlayerEntity(winner.toString(), winnerPointsPool.points),
+                    PlayerEntity(loser.toString(), loserPointsPool.points)
+                )
             } else {
                 val result = gson.toJson(Draw(firstPlayerPool.points, secondPlayerPool.points))
                 firstPlayerWriter.println(result)
                 secondPlayerWriter.println(result)
+
+                saveRepository.save(
+                    PlayerEntity(firstPlayer.toString(), firstPlayerPool.points),
+                    PlayerEntity(secondPlayer.toString(), secondPlayerPool.points)
+                )
             }
         } catch (ioException: IOException) {
         } finally {

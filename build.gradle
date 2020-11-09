@@ -18,6 +18,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'org.jetbrains:annotations:20.1.0'
     implementation 'javax.validation:validation-api:2.0.1.Final'
+    implementation "org.mongodb:mongo-java-driver:3.12.7"
+    implementation "dev.morphia.morphia:core:1.6.0"
+    implementation "org.slf4j:slf4j-nop:1.7.13"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 }
