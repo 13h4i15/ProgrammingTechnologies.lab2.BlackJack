@@ -1,11 +1,12 @@
 package server
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.databind.ObjectMapper
 import db.PlayerEntity
-import di.module.IOModule
+import di.scope.SessionScope
 import model.PointsPool
 import repository.SaveSessionResultRepository
 import servermodel.*
+import servermodel.file.SessionFinal
 import util.nextCard
 import java.io.*
 import java.net.Socket
@@ -13,34 +14,20 @@ import javax.inject.Inject
 import javax.inject.Named
 import kotlin.random.Random
 
-class Session(private val firstPlayer: Socket, private val secondPlayer: Socket) : Thread() {
-    @Inject
-    lateinit var saveRepository: SaveSessionResultRepository
-
-    @Inject
-    lateinit var gson: Gson
-
-    @Inject
-    lateinit var firstPlayerPool: PointsPool
-
-    @Inject
-    lateinit var secondPlayerPool: PointsPool
-
-    @Inject
-    @Named("firstPlayer")
-    lateinit var firstPlayerReader: BufferedReader
-
-    @Inject
-    @Named("secondPlayer")
-    lateinit var secondPlayerReader: BufferedReader
-
-    @Inject
-    @Named("firstPlayer")
-    lateinit var firstPlayerWriter: PrintWriter
-
-    @Inject
-    @Named("secondPlayer")
-    lateinit var secondPlayerWriter: PrintWriter
+@SessionScope
+class Session @Inject constructor(
+    private val mapper: ObjectMapper,
+    private val saveRepository: SaveSessionResultRepository,
+    private val firstPlayerPool: PointsPool,
+    private val secondPlayerPool: PointsPool,
+    @Named("firstPlayer") private val firstPlayer: Socket,
+    @Named("secondPlayer") private val secondPlayer: Socket,
+    @Named("firstPlayer") private val firstPlayerReader: BufferedReader,
+    @Named("secondPlayer") private val secondPlayerReader: BufferedReader,
+    @Named("firstPlayer") private val firstPlayerWriter: PrintWriter,
+    @Named("secondPlayer") private val secondPlayerWriter: PrintWriter,
+    @Named("result") private val resultWriter: PrintWriter
+) : Thread() {
 
     private val cardsOut = mutableListOf<Card>()
 
@@ -48,7 +35,6 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
         get() = firstPlayerPool.isClosed && secondPlayerPool.isClosed
 
     init {
-        appComponent.plusIOComponent(IOModule(firstPlayer, secondPlayer)).inject(this)
         start()
     }
 
@@ -59,7 +45,7 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
             generateSendAndSaveCard(firstPlayerWriter, firstPlayerPool)
             generateSendAndSaveCard(secondPlayerWriter, secondPlayerPool)
 
-            firstPlayerWriter.println(gson.toJson(RoundNotification(true)))
+            firstPlayerWriter.println(mapper.writeValueAsString(RoundNotification(true)))
 
             var turnNumber = 0
             do {
@@ -77,9 +63,9 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
                     continue
                 }
 
-                if (gson.fromJson(turningPlayerReader.readLine(), Answer::class.java).isAdded) {
+                if (mapper.readValue(turningPlayerReader.readLine(), Answer::class.java).isAdded) {
                     generateSendAndSaveCard(turningPlayerWriter, turningPlayerPool)
-                    turningPlayerWriter.println(gson.toJson(Points(turningPlayerPool.points)))
+                    turningPlayerWriter.println(mapper.writeValueAsString(Points(turningPlayerPool.points)))
 
                     if (turningPlayerPool.points >= 21) {
                         if (!opponentPool.isClosed) {
@@ -93,6 +79,7 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
                 if (!opponentPool.isClosed) sendRoundNotification(opponentWriter, true)
             } while (!isPoolsClosed)
 
+            val winnerScore: Int
             if (firstPlayerPool.points != secondPlayerPool.points) {
                 val isFirstPlayerWinner = ((firstPlayerPool.points >= 21 || secondPlayerPool.points >= 21)
                         && (firstPlayerPool.points == 21 || secondPlayerPool.points > 21))
@@ -108,15 +95,17 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
                 val winnerPointsPool = if (isFirstPlayerWinner) firstPlayerPool else secondPlayerPool
                 val loserPointsPool = if (isFirstPlayerWinner) secondPlayerPool else firstPlayerPool
 
-                winnerWriter.println(gson.toJson(Winner(winnerPointsPool.points, loserPointsPool.points)))
-                loserWriter.println(gson.toJson(Loser(loserPointsPool.points, winnerPointsPool.points)))
+                winnerWriter.println(mapper.writeValueAsString(Winner(winnerPointsPool.points, loserPointsPool.points)))
+                loserWriter.println(mapper.writeValueAsString(Loser(loserPointsPool.points, winnerPointsPool.points)))
 
                 saveRepository.save(
                     PlayerEntity(winner.toString(), winnerPointsPool.points),
                     PlayerEntity(loser.toString(), loserPointsPool.points)
                 )
+
+                winnerScore = winnerPointsPool.points
             } else {
-                val result = gson.toJson(Draw(firstPlayerPool.points, secondPlayerPool.points))
+                val result = mapper.writeValueAsString(Draw(firstPlayerPool.points, secondPlayerPool.points))
                 firstPlayerWriter.println(result)
                 secondPlayerWriter.println(result)
 
@@ -124,7 +113,11 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
                     PlayerEntity(firstPlayer.toString(), firstPlayerPool.points),
                     PlayerEntity(secondPlayer.toString(), secondPlayerPool.points)
                 )
+
+                winnerScore = firstPlayerPool.points
             }
+            val final = SessionFinal(firstPlayer.toString(), secondPlayer.toString(), winnerScore)
+            resultWriter.println(mapper.writeValueAsString(final))
         } catch (ioException: IOException) {
         } finally {
             firstPlayer.close()
@@ -133,13 +126,13 @@ class Session(private val firstPlayer: Socket, private val secondPlayer: Socket)
     }
 
     private fun sendRoundNotification(writer: PrintWriter, isNext: Boolean) {
-        writer.println(gson.toJson(RoundNotification(isNext)))
+        writer.println(mapper.writeValueAsString(RoundNotification(isNext)))
     }
 
     private fun generateSendAndSaveCard(writer: PrintWriter, pool: PointsPool) {
         val card = Random.nextCard(cardsOut)
         cardsOut.add(card)
-        writer.println(gson.toJson(card))
+        writer.println(mapper.writeValueAsString(card))
         pool.addCard(card)
     }
 }

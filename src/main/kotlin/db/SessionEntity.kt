@@ -8,5 +8,5 @@ import dev.morphia.annotations.Property
 data class SessionEntity(
     @Id @Property("id") var id: Int? = null,
     var firstPlayer: PlayerEntity? = null,
-    var secondPlayer: PlayerEntity? = null,
+    var secondPlayer: PlayerEntity? = null
 )

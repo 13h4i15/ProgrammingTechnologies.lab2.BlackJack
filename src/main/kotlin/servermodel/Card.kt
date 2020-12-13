@@ -1,7 +1,13 @@
 package servermodel
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import javax.validation.constraints.Max
 import javax.validation.constraints.Min
 
-data class Card(@Min(1) @Max(11) @SerializedName("cost") val cost: Int)
+@JsonAutoDetect
+data class Card @JsonCreator constructor(
+    @field:JsonProperty("cost") @param:JsonProperty("cost") @get:JsonProperty("cost")
+    @Min(1) @Max(11) val cost: Int
+)

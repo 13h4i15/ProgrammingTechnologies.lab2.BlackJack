@@ -1,5 +1,11 @@
 package servermodel
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 
-data class RoundNotification(@SerializedName("is_next_round") val isNextRound: Boolean)
+@JsonAutoDetect
+data class RoundNotification @JsonCreator constructor(
+    @field:JsonProperty("is_next_round") @param:JsonProperty("is_next_round") @get:JsonProperty("is_next_round")
+    val isNextRound: Boolean
+)

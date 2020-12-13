@@ -8,8 +8,10 @@ import java.net.Socket
 import javax.inject.Named
 
 @Module
-class IOModule(private val firstPlayer: Socket, private val secondPlayer: Socket) {
-
+class SessionModule(
+    @get:Provides @get:Named("firstPlayer") @SessionScope val firstPlayer: Socket,
+    @get:Provides @get:Named("secondPlayer") @SessionScope val secondPlayer: Socket
+) {
     @Provides
     @Named("firstPlayer")
     @SessionScope

@@ -12,15 +12,20 @@ repositories {
     mavenCentral()
 }
 dependencies {
+    implementation 'junit:junit:4.12'
     def dagger2_version = '2.29.1'
     implementation "com.google.dagger:dagger:$dagger2_version"
     kapt "com.google.dagger:dagger-compiler:$dagger2_version"
-    implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'org.jetbrains:annotations:20.1.0'
     implementation 'javax.validation:validation-api:2.0.1.Final'
     implementation "org.mongodb:mongo-java-driver:3.12.7"
     implementation "dev.morphia.morphia:core:1.6.0"
     implementation "org.slf4j:slf4j-nop:1.7.13"
+    implementation "com.fasterxml.jackson.core:jackson-core:2.11.3"
+    implementation "com.fasterxml.jackson.module:jackson-module-jsonSchema:2.11.0"
+    implementation "com.github.java-json-tools:json-schema-validator:2.2.14"
+
+    testImplementation "junit:junit:4.13"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 }

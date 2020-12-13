@@ -1,7 +1,7 @@
 package client;
 
 import clientmodel.Result;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import servermodel.*;
 
 import java.io.*;
@@ -13,18 +13,18 @@ public class Client {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                  PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
                  BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in))) {
-                Gson gson = new Gson();
+                ObjectMapper mapper = new ObjectMapper();
 
                 System.out.println("Waiting for players...");
 
-                int firstCost = gson.fromJson(reader.readLine(), Card.class).getCost();
+                int firstCost = mapper.readValue(reader.readLine(), Card.class).getCost();
 
                 System.out.printf("You got: %d.%n", firstCost);
 
                 System.out.println("Waiting for turn...");
 
                 while (true) {
-                    RoundNotification roundNotification = gson.fromJson(reader.readLine(), RoundNotification.class);
+                    RoundNotification roundNotification = mapper.readValue(reader.readLine(), RoundNotification.class);
                     if (!roundNotification.isNextRound()) break;
 
                     boolean isNext;
@@ -41,12 +41,12 @@ public class Client {
                         }
                     }
 
-                    writer.println(gson.toJson(new Answer(isNext)));
+                    writer.println(mapper.writeValueAsString(new Answer(isNext)));
 
                     if (isNext) {
-                        Card card = gson.fromJson(reader.readLine(), Card.class);
+                        Card card = mapper.readValue(reader.readLine(), Card.class);
                         System.out.printf("You got: %d%n", card.getCost());
-                        Points points = gson.fromJson(reader.readLine(), Points.class);
+                        Points points = mapper.readValue(reader.readLine(), Points.class);
                         System.out.printf("Current score: %d%n", points.getPoints());
                         if (points.getPoints() >= 21) {
                             break;
@@ -57,7 +57,7 @@ public class Client {
                     }
                 }
 
-                Result answer = gson.fromJson(reader.readLine(), Result.class);
+                Result answer = mapper.readValue(reader.readLine(), Result.class);
 
                 System.out.println(answer);
             }

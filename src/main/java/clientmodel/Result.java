@@ -1,27 +1,31 @@
 package clientmodel;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import servermodel.ResultState;
-import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
+@JsonAutoDetect
 public class Result {
-    @SerializedName("result")
+    @JsonProperty("result")
     @NotNull ResultState resultState;
 
-    @SerializedName("player_points")
+    @JsonProperty("player_points")
     @Max(30)
     @Min(3)
     int playerPoints;
 
     @Max(30)
     @Min(3)
-    @SerializedName("opponent_points")
+    @JsonProperty("opponent_points")
     int opponentPoints;
 
-    public Result(@NotNull ResultState resultState, int playerPoints, int opponentPoints) {
+    @JsonCreator
+    public Result(@NotNull @JsonProperty("result") ResultState resultState, @JsonProperty("player_points") int playerPoints, @JsonProperty("opponent_points") int opponentPoints) {
         this.resultState = resultState;
         this.playerPoints = playerPoints;
         this.opponentPoints = opponentPoints;

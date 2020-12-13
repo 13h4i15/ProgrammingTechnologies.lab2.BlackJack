@@ -6,9 +6,9 @@ import java.net.ServerSocket
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [SocketModule::class, GsonModule::class, MorphiaModule::class])
+@Component(modules = [SocketModule::class, JsonModule::class, MorphiaModule::class, FileModule::class])
 interface AppComponent {
     fun plusServerSocket(): ServerSocket
 
-    fun plusIOComponent(ioModule: IOModule): IOComponent
+    fun plusSessionComponent(sessionModule: SessionModule): SessionComponent
 }
